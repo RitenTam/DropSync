@@ -186,6 +186,9 @@ const Index = () => {
         <p className="text-xs font-mono text-muted-foreground">
           No login · No tracking · Auto-expires · E2E
         </p>
+        <p className="text-xs font-mono text-muted-foreground">
+          Developed by Ritendra Tamang
+        </p>
       </footer>
     </div>
   );
