@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import DropZone from "@/components/DropZone";
@@ -61,12 +62,12 @@ const Index = () => {
               DropSync
             </span>
           </div>
-          <a
-            href="/receive"
+          <Link
+            to="/receive"
             className="text-xs font-mono text-muted-foreground hover:text-primary transition-colors"
           >
             [receive]
-          </a>
+          </Link>
         </div>
       </header>
 

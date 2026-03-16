@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap, ArrowRight } from "lucide-react";
 
@@ -18,10 +18,10 @@ export default function ReceivePage() {
     <div className="min-h-screen flex flex-col scanline">
       <header className="border-b border-border px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             <span className="font-mono font-bold text-foreground tracking-tight">DropSync</span>
-          </a>
+          </Link>
         </div>
       </header>
 
