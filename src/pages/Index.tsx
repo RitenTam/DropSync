@@ -101,12 +101,12 @@ const Index = () => {
     <div className="min-h-screen flex flex-col scanline">
       <header className="border-b border-border px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-primary" />
             <span className="font-mono font-bold text-foreground tracking-tight">
               DropSync
             </span>
-          </div>
+          </Link>
           <Link
             to="/receive"
             className="text-xs font-mono text-muted-foreground hover:text-primary transition-colors"
