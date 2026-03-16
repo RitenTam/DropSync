@@ -152,17 +152,29 @@ const Index = () => {
                 onPasswordChange={setPassword}
               />
 
-              <button
-                onClick={handleShare}
-                disabled={!canShare || isSharing}
-                className={`w-full py-3 font-mono font-semibold text-sm rounded-md transition-all ${
-                  canShare
-                    ? "bg-primary text-primary-foreground hover:opacity-90 glow-box animate-pulse-glow"
-                    : "bg-secondary text-muted-foreground cursor-not-allowed"
-                }`}
-              >
-                {isSharing ? "Uploading..." : "→ Generate Share Link"}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleShare}
+                  disabled={!canShare || isSharing}
+                  className={`w-full py-3 font-mono font-semibold text-sm rounded-md transition-all ${
+                    canShare
+                      ? "bg-primary text-primary-foreground hover:opacity-90 glow-box animate-pulse-glow"
+                      : "bg-secondary text-muted-foreground cursor-not-allowed"
+                  }`}
+                >
+                  {isSharing ? "Uploading..." : "→ Generate Share Link"}
+                </button>
+
+                {isSharing ? (
+                  <button
+                    type="button"
+                    onClick={clearFile}
+                    className="w-full py-3 font-mono font-semibold text-sm rounded-md bg-destructive text-destructive-foreground hover:opacity-90"
+                  >
+                    Cancel upload
+                  </button>
+                ) : null}
+              </div>
             </>
           ) : (
             <ShareResult item={shareResult} onReset={handleReset} />
