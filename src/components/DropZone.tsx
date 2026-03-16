@@ -1,9 +1,9 @@
 import { useCallback, useState, useRef } from "react";
-import { Upload, FileText, Image, File } from "lucide-react";
+import { Upload, FileText, Image, File as FileIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DropZoneProps {
-  onFileDrop: (file: File) => void;
+  onFileDrop: (file: File | null) => void;
   onTextPaste: (text: string) => void;
   textValue: string;
   onTextChange: (text: string) => void;
@@ -64,12 +64,13 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
   const clearFile = () => {
     setDroppedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    onFileDrop(null);
   };
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-5 h-5" />;
     if (type.includes("pdf") || type.includes("document")) return <FileText className="w-5 h-5" />;
-    return <File className="w-5 h-5" />;
+    return <FileIcon className="w-5 h-5" />;
   };
 
   return (

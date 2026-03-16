@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
@@ -16,14 +16,29 @@ const Index = () => {
   const [shareResult, setShareResult] = useState<ShareItem | null>(null);
   const [isSharing, setIsSharing] = useState(false);
 
-  const handleFileDrop = useCallback((f: File) => {
-    setFile(f);
-    setText("");
-  }, []);
+  const uploadIdRef = useRef(0);
+
+  const handleFileDrop = useCallback(
+    (f: File | null) => {
+      if (f) {
+        setFile(f);
+        setText("");
+        return;
+      }
+
+      // If the user clears the file while uploading, cancel any in-flight share request
+      uploadIdRef.current += 1;
+      setFile(null);
+      setIsSharing(false);
+    },
+    [setFile, setText, setIsSharing]
+  );
 
   const handleShare = async () => {
     if (!text && !file) return;
+
     setIsSharing(true);
+    const currentUploadId = ++uploadIdRef.current;
 
     try {
       const item = await createShare({
@@ -34,20 +49,30 @@ const Index = () => {
         expiresAt: Date.now() + expiry,
         oneTimeDownload: oneTime,
       });
+
+      // If the user cleared the file while uploading, ignore the result.
+      if (currentUploadId !== uploadIdRef.current) return;
+
       setShareResult(item);
     } catch (err) {
       console.error("Share failed:", err);
     } finally {
-      setIsSharing(false);
+      if (currentUploadId === uploadIdRef.current) {
+        setIsSharing(false);
+      }
     }
   };
 
   const handleReset = () => {
+    // Cancel any in-flight upload so it doesn't update state after reset
+    uploadIdRef.current += 1;
+
     setText("");
     setFile(null);
     setPassword("");
     setOneTime(false);
     setShareResult(null);
+    setIsSharing(false);
   };
 
   const canShare = text.length > 0 || file !== null;
