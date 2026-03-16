@@ -6,6 +6,7 @@ import DropZone from "@/components/DropZone";
 import ShareOptions from "@/components/ShareOptions";
 import ShareResult from "@/components/ShareResult";
 import { createShare, type ShareItem } from "@/lib/shareStore";
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [text, setText] = useState("");
@@ -18,6 +19,28 @@ const Index = () => {
 
   const uploadIdRef = useRef(0);
 
+  const cancelUpload = useCallback(
+    (showNotification = false) => {
+      // Cancel any in-flight upload so we don't get stuck in "Uploading..."
+      uploadIdRef.current += 1;
+      setIsSharing(false);
+
+      if (showNotification && isSharing) {
+        toast({
+          title: "Upload cancelled",
+          description: "You can now select a new file.",
+          variant: "destructive",
+        });
+      }
+    },
+    [isSharing]
+  );
+
+  const clearFile = useCallback(() => {
+    setFile(null);
+    cancelUpload(true);
+  }, [cancelUpload]);
+
   const handleFileDrop = useCallback(
     (f: File | null) => {
       if (f) {
@@ -26,12 +49,9 @@ const Index = () => {
         return;
       }
 
-      // If the user clears the file while uploading, cancel any in-flight share request
-      uploadIdRef.current += 1;
-      setFile(null);
-      setIsSharing(false);
+      clearFile();
     },
-    [setFile, setText, setIsSharing]
+    [clearFile, setText]
   );
 
   const handleShare = async () => {
@@ -117,7 +137,10 @@ const Index = () => {
                 onFileDrop={handleFileDrop}
                 onTextPaste={() => {}}
                 textValue={text}
-                onTextChange={(v) => { setText(v); setFile(null); }}
+                onTextChange={(v) => {
+                  setText(v);
+                  clearFile();
+                }}
               />
 
               <ShareOptions
