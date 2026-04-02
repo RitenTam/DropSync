@@ -14,6 +14,24 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
+  const mergeFiles = useCallback((incoming: File[]) => {
+    if (incoming.length === 0) return;
+
+    setDroppedFiles((prev) => {
+      const map = new Map<string, File>();
+
+      [...prev, ...incoming].forEach((file) => {
+        const withPath = file as File & { webkitRelativePath?: string };
+        const identity = `${withPath.webkitRelativePath || file.name}:${file.size}:${file.lastModified}`;
+        map.set(identity, file);
+      });
+
+      const merged = Array.from(map.values());
+      onFilesDrop(merged);
+      return merged;
+    });
+  }, [onFilesDrop]);
+
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -37,32 +55,28 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const selected = Array.from(files);
-      setDroppedFiles(selected);
-      onFilesDrop(selected);
+      mergeFiles(Array.from(files));
     }
-  }, [onFilesDrop]);
+  }, [mergeFiles]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const files = e.clipboardData.files;
     if (files.length > 0) {
       e.preventDefault();
-      const selected = Array.from(files);
-      setDroppedFiles(selected);
-      onFilesDrop(selected);
+      mergeFiles(Array.from(files));
       return;
     }
     // Text paste handled by textarea onChange
-  }, [onFilesDrop]);
+  }, [mergeFiles]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const selected = Array.from(files);
-      setDroppedFiles(selected);
-      onFilesDrop(selected);
+    const selectedFiles = e.target.files;
+    if (selectedFiles && selectedFiles.length > 0) {
+      mergeFiles(Array.from(selectedFiles));
     }
-  }, [onFilesDrop]);
+    // Reset value so selecting the same file again still triggers onChange.
+    e.target.value = "";
+  }, [mergeFiles]);
 
   const clearFiles = () => {
     setDroppedFiles([]);
@@ -110,7 +124,7 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => droppedFiles.length === 0 && fileInputRef.current?.click()}
+        onClick={() => fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all duration-200 ${
           isDragging
             ? "border-primary bg-primary/5 glow-box"
@@ -166,6 +180,28 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
                 {droppedFiles.slice(0, 3).map((file) => file.webkitRelativePath || file.name).join(" • ")}
                 {droppedFiles.length > 3 ? " • ..." : ""}
               </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                  Add files
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    folderInputRef.current?.click();
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                  Add folder
+                </button>
+              </div>
             </motion.div>
           ) : (
             <motion.div
