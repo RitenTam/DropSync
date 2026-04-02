@@ -143,7 +143,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="px-4 py-4 md:px-8">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-border/65 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center rounded-2xl border border-border/65 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-md">
           <a href="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
               <Zap className="h-4 w-4" />
@@ -152,12 +152,6 @@ const Index = () => {
               DropSync
             </span>
           </a>
-          <Link
-            to="/receive"
-            className="rounded-lg border border-border/80 bg-card px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:text-primary"
-          >
-            Receive link
-          </Link>
         </div>
       </header>
 
@@ -229,6 +223,15 @@ const Index = () => {
                       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     ) : null}
                   </button>
+
+                  <div className="pt-1 text-center">
+                    <Link
+                      to="/receive"
+                      className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+                    >
+                      Receive link
+                    </Link>
+                  </div>
 
                   <AnimatePresence>
                     {isSharing && (
