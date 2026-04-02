@@ -46,13 +46,12 @@ const Index = () => {
     (selectedFiles: File[]) => {
       if (selectedFiles.length > 0) {
         setFiles(selectedFiles);
-        setText("");
         return;
       }
 
       clearFile();
     },
-    [clearFile, setText]
+    [clearFile]
   );
 
   const buildZipFromFiles = useCallback(async (selectedFiles: File[]) => {
@@ -69,8 +68,12 @@ const Index = () => {
     return new File([blob], `dropsync-${timestamp}.zip`, { type: "application/zip" });
   }, []);
 
-  const handleShare = async () => {
-    if (!text && files.length === 0) return;
+  const createShareLink = async (shareType: "file" | "text") => {
+    const hasText = text.trim().length > 0;
+    const hasFiles = files.length > 0;
+
+    if (shareType === "text" && !hasText) return;
+    if (shareType === "file" && !hasFiles) return;
 
     setIsSharing(true);
     const currentUploadId = ++uploadIdRef.current;
@@ -81,15 +84,15 @@ const Index = () => {
         return !!fileWithPath.webkitRelativePath;
       });
 
-      const uploadFile = files.length === 0
-        ? undefined
-        : files.length === 1 && !hasFolderSelection
+      const uploadFile = shareType === "file"
+        ? files.length === 1 && !hasFolderSelection
           ? files[0]
-          : await buildZipFromFiles(files);
+          : await buildZipFromFiles(files)
+        : undefined;
 
       const item = await createShare({
-        type: uploadFile ? "file" : "text",
-        content: uploadFile ? undefined : text,
+        type: shareType,
+        content: shareType === "text" ? text.trim() : undefined,
         file: uploadFile,
         password: password || undefined,
         expiresAt: Date.now() + expiry,
@@ -109,6 +112,14 @@ const Index = () => {
     }
   };
 
+  const handleFileShare = async () => {
+    await createShareLink("file");
+  };
+
+  const handleTextShare = async () => {
+    await createShareLink("text");
+  };
+
   const handleReset = () => {
     // Cancel any in-flight upload so it doesn't update state after reset
     uploadIdRef.current += 1;
@@ -121,7 +132,8 @@ const Index = () => {
     setIsSharing(false);
   };
 
-  const canShare = text.length > 0 || files.length > 0;
+  const canShareFiles = files.length > 0;
+  const canShareText = text.trim().length > 0;
   const trustPoints = [
     { icon: ShieldCheck, label: "Secure sharing" },
     { icon: EyeOff, label: "No tracking" },
@@ -185,32 +197,35 @@ const Index = () => {
             </div>
 
             {!shareResult ? (
-              <div className="space-y-4 rounded-3xl border border-border/65 bg-card p-4 md:p-6 shadow-sm">
-                <DropZone
-                  onFilesDrop={handleFilesDrop}
-                  textValue={text}
-                  onTextChange={(v) => {
-                    setText(v);
-                    clearFile();
-                  }}
-                />
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className="space-y-4 rounded-3xl border border-border/65 bg-card p-4 md:p-6 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Upload files</p>
+                      <p className="text-xs text-muted-foreground">Drop files or folders, then generate a link.</p>
+                    </div>
+                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
+                      Files
+                    </span>
+                  </div>
 
-                <div className="space-y-2">
+                  <DropZone onFilesDrop={handleFilesDrop} />
+
                   <button
                     type="button"
-                    onClick={handleShare}
-                    disabled={!canShare || isSharing}
+                    onClick={handleFileShare}
+                    disabled={!canShareFiles || isSharing}
                     className={`group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-base font-bold transition-all duration-300 ${
-                      canShare
+                      canShareFiles
                         ? "bg-primary text-primary-foreground glow-box-strong hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
                         : "bg-secondary text-muted-foreground cursor-not-allowed"
                     }`}
                   >
                     <span className="relative z-10 inline-flex items-center gap-2">
                       {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      {isSharing ? "Generating secure link..." : "Generate Share Link"}
+                      {isSharing ? "Generating secure link..." : "Generate file share link"}
                     </span>
-                    {canShare ? (
+                    {canShareFiles ? (
                       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     ) : null}
                   </button>
@@ -248,6 +263,54 @@ const Index = () => {
                       Cancel upload
                     </button>
                   ) : null}
+                </div>
+
+                <div className="space-y-4 rounded-3xl border border-border/65 bg-card p-4 md:p-6 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Share text</p>
+                      <p className="text-xs text-muted-foreground">Paste notes, snippets, or messages and share them directly.</p>
+                    </div>
+                    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
+                      Text
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">Paste text</p>
+                      <p className="text-xs font-mono text-muted-foreground">{text.length} chars</p>
+                    </div>
+                    <textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder="Share code snippets, notes, logs, or quick messages..."
+                      className="h-56 w-full resize-none rounded-2xl border border-border/70 bg-secondary/75 p-3 text-sm text-foreground shadow-inner outline-none transition-all focus:border-primary/35 focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTextShare}
+                    disabled={!canShareText || isSharing}
+                    className={`group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-base font-bold transition-all duration-300 ${
+                      canShareText
+                        ? "bg-primary text-primary-foreground glow-box-strong hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+                        : "bg-secondary text-muted-foreground cursor-not-allowed"
+                    }`}
+                  >
+                    <span className="relative z-10 inline-flex items-center gap-2">
+                      {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {isSharing ? "Generating secure link..." : "Generate text share link"}
+                    </span>
+                    {canShareText ? (
+                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                    ) : null}
+                  </button>
+
+                  <p className="text-xs text-muted-foreground">
+                    Text stays in this panel while you work on files in the other one.
+                  </p>
                 </div>
               </div>
             ) : (
