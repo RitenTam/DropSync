@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        mono: ["JetBrains Mono", "monospace"],
-        body: ["Space Grotesk", "sans-serif"],
+        mono: ["IBM Plex Mono", "monospace"],
+        body: ["Manrope", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -77,8 +77,8 @@ export default {
           to: { height: "0" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(120 100% 50% / 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsl(120 100% 50% / 0.5), 0 0 80px hsl(120 100% 50% / 0.15)" },
+          "0%, 100%": { boxShadow: "0 8px 20px hsl(207 92% 38% / 0.22)" },
+          "50%": { boxShadow: "0 16px 40px hsl(207 92% 38% / 0.3), 0 2px 0 hsl(0 0% 100% / 0.4) inset" },
         },
         blink: {
           "0%, 100%": { opacity: "1" },

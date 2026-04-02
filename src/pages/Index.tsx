@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Zap, Loader2, ShieldCheck, Clock3, EyeOff, Sparkles } from "lucide-react";
 import JSZip from "jszip";
 import DropZone from "@/components/DropZone";
 import ShareOptions from "@/components/ShareOptions";
@@ -122,52 +122,143 @@ const Index = () => {
   };
 
   const canShare = text.length > 0 || files.length > 0;
+  const trustPoints = [
+    { icon: ShieldCheck, label: "Secure sharing" },
+    { icon: EyeOff, label: "No tracking" },
+    { icon: Clock3, label: "Auto-expiry" },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col scanline">
-      <header className="border-b border-border px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            <span className="font-mono font-bold text-foreground tracking-tight">
+    <div className="min-h-screen flex flex-col">
+      <header className="px-4 py-4 md:px-8">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl border border-border/65 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-md">
+          <a href="/" className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Zap className="h-4 w-4" />
+            </span>
+            <span className="text-lg font-extrabold tracking-tight">
               DropSync
             </span>
           </a>
           <Link
             to="/receive"
-            className="text-xs font-mono text-muted-foreground hover:text-primary transition-colors"
+            className="rounded-lg border border-border/80 bg-card px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:text-primary"
           >
-            [receive]
+            Receive link
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center px-4 py-8">
+      <main className="flex-1 px-4 pb-10 pt-3 md:px-8 md:pt-6">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-lg space-y-6"
+          className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-12"
         >
-          <div className="space-y-1">
-            <h1 className="text-xl font-mono font-bold text-foreground">
-              Share anything<span className="text-primary animate-blink">_</span>
-            </h1>
-            <p className="text-xs text-muted-foreground font-mono">
-              Paste text, drop files. Get a code. Share instantly.
-            </p>
-          </div>
+          <section className="lg:col-span-8 space-y-4">
+            <div className="hero-dot-grid rounded-3xl border border-border/60 bg-card/55 p-5 md:p-7">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                Fast and secure sharing
+              </div>
+              <h1 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight text-foreground">
+                Share files, folders, or text in seconds
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm md:text-base text-muted-foreground">
+                No login required. Configure expiry, optional one-time access, and password protection,
+                then generate a share link your recipients can open instantly.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                {trustPoints.map((point) => (
+                  <span
+                    key={point.label}
+                    className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm"
+                  >
+                    <point.icon className="h-3.5 w-3.5 text-primary" />
+                    {point.label}
+                  </span>
+                ))}
+                <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  No login
+                </span>
+              </div>
+            </div>
 
-          {!shareResult ? (
-            <>
-              <DropZone
-                onFilesDrop={handleFilesDrop}
-                textValue={text}
-                onTextChange={(v) => {
-                  setText(v);
-                  clearFile();
-                }}
-              />
+            {!shareResult ? (
+              <div className="space-y-4 rounded-3xl border border-border/65 bg-card p-4 md:p-6 shadow-sm">
+                <DropZone
+                  onFilesDrop={handleFilesDrop}
+                  textValue={text}
+                  onTextChange={(v) => {
+                    setText(v);
+                    clearFile();
+                  }}
+                />
 
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    disabled={!canShare || isSharing}
+                    className={`group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-base font-bold transition-all duration-300 ${
+                      canShare
+                        ? "bg-primary text-primary-foreground glow-box-strong hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+                        : "bg-secondary text-muted-foreground cursor-not-allowed"
+                    }`}
+                  >
+                    <span className="relative z-10 inline-flex items-center gap-2">
+                      {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {isSharing ? "Generating secure link..." : "Generate Share Link"}
+                    </span>
+                    {canShare ? (
+                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                    ) : null}
+                  </button>
+
+                  <AnimatePresence>
+                    {isSharing && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="rounded-xl border border-border/70 bg-secondary/75 px-3 py-2"
+                      >
+                        <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Encrypting and uploading</span>
+                          <span>Please wait...</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-card">
+                          <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: "180%" }}
+                            transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                            className="h-full w-1/3 rounded-full bg-primary"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {isSharing ? (
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="w-full rounded-xl border border-destructive/40 bg-destructive/10 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/15"
+                    >
+                      Cancel upload
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-border/65 bg-card p-4 md:p-6 shadow-sm">
+                <ShareResult item={shareResult} onReset={handleReset} />
+              </div>
+            )}
+          </section>
+
+          <aside className="lg:col-span-4 space-y-4">
+            {!shareResult ? (
               <ShareOptions
                 expiry={expiry}
                 onExpiryChange={setExpiry}
@@ -176,42 +267,25 @@ const Index = () => {
                 password={password}
                 onPasswordChange={setPassword}
               />
+            ) : null}
 
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleShare}
-                  disabled={!canShare || isSharing}
-                  className={`w-full py-3 font-mono font-semibold text-sm rounded-md transition-all ${
-                    canShare
-                      ? "bg-primary text-primary-foreground hover:opacity-90 glow-box animate-pulse-glow"
-                      : "bg-secondary text-muted-foreground cursor-not-allowed"
-                  }`}
-                >
-                  {isSharing ? "Uploading..." : "→ Generate Share Link"}
-                </button>
-
-                {isSharing ? (
-                  <button
-                    type="button"
-                    onClick={clearFile}
-                    className="w-full py-3 font-mono font-semibold text-sm rounded-md bg-destructive text-destructive-foreground hover:opacity-90"
-                  >
-                    Cancel upload
-                  </button>
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <ShareResult item={shareResult} onReset={handleReset} />
-          )}
+            <section className="panel-surface rounded-2xl p-4 md:p-5 shadow-sm">
+              <p className="text-sm font-semibold text-foreground">How it works</p>
+              <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
+                <li>1. Add your files/folders or paste text.</li>
+                <li>2. Set expiry and optional security controls.</li>
+                <li>3. Generate and copy your secure share link.</li>
+              </ol>
+            </section>
+          </aside>
         </motion.div>
       </main>
 
-      <footer className="border-t border-border px-4 py-3 text-center">
-        <p className="text-xs font-mono text-muted-foreground">
+      <footer className="px-4 pb-8 pt-2 text-center md:px-8">
+        <p className="text-xs text-muted-foreground">
           No login · No tracking · Auto-expires · E2E
         </p>
-        <p className="text-xs font-mono text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Developed by Ritendra Tamang
         </p>
       </footer>

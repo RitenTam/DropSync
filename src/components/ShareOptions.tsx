@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Clock, Lock, Download } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface ShareOptionsProps {
   expiry: number;
@@ -22,20 +23,23 @@ export default function ShareOptions({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="space-y-3">
-      {/* Expiry */}
-      <div className="flex items-center gap-2">
-        <Clock className="w-4 h-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-mono w-16">Expires:</span>
-        <div className="flex gap-1">
+    <section className="panel-surface rounded-2xl p-4 md:p-5 space-y-5 shadow-sm">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-primary" />
+          <p className="text-sm font-semibold">Expiry window</p>
+        </div>
+        <p className="text-xs text-muted-foreground">Choose when this share automatically expires.</p>
+        <div className="grid grid-cols-3 gap-2">
           {EXPIRY_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              type="button"
               onClick={() => onExpiryChange(opt.value)}
-              className={`px-2 py-1 text-xs font-mono rounded transition-all ${
+              className={`rounded-xl px-3 py-2 text-xs font-semibold transition-all lift-hover ${
                 expiry === opt.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-border"
+                  ? "bg-primary text-primary-foreground glow-box"
+                  : "bg-secondary/80 text-secondary-foreground hover:bg-secondary"
               }`}
             >
               {opt.label}
@@ -44,46 +48,51 @@ export default function ShareOptions({
         </div>
       </div>
 
-      {/* One-time download */}
-      <div className="flex items-center gap-2">
-        <Download className="w-4 h-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-mono w-16">One-time:</span>
-        <button
-          onClick={() => onOneTimeChange(!oneTime)}
-          className={`px-2 py-1 text-xs font-mono rounded transition-all ${
-            oneTime
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground hover:bg-border"
-          }`}
-        >
-          {oneTime ? "ON" : "OFF"}
-        </button>
-      </div>
+      <div className="rounded-xl bg-secondary/65 p-3 md:p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold">One-time access</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Invalidate link immediately after the first successful open.</p>
+          </div>
+          <Switch checked={oneTime} onCheckedChange={onOneTimeChange} />
+        </div>
 
-      {/* Password */}
-      <div className="flex items-center gap-2">
-        <Lock className="w-4 h-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-mono w-16">Password:</span>
-        <button
-          onClick={() => { setShowPassword(!showPassword); if (showPassword) onPasswordChange(""); }}
-          className={`px-2 py-1 text-xs font-mono rounded transition-all ${
-            showPassword
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground hover:bg-border"
-          }`}
-        >
-          {showPassword ? "ON" : "OFF"}
-        </button>
-        {showPassword && (
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => onPasswordChange(e.target.value)}
-            placeholder="Enter password"
-            className="flex-1 bg-secondary border border-border rounded px-2 py-1 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold">Password protection</p>
+            </div>
+            <p className="text-xs text-muted-foreground">Add an extra layer before the recipient can view content.</p>
+          </div>
+          <Switch
+            checked={showPassword}
+            onCheckedChange={(checked) => {
+              setShowPassword(checked);
+              if (!checked) onPasswordChange("");
+            }}
           />
+        </div>
+
+        {showPassword && (
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-xs font-medium text-muted-foreground">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => onPasswordChange(e.target.value)}
+              placeholder="Set a password"
+              className="h-11 w-full rounded-xl border border-border/70 bg-card px-3 text-sm shadow-sm outline-none transition-all focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
