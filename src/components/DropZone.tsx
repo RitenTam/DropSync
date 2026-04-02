@@ -3,16 +3,16 @@ import { Upload, FileText, Image, File as FileIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DropZoneProps {
-  onFileDrop: (file: File | null) => void;
-  onTextPaste: (text: string) => void;
+  onFilesDrop: (files: File[]) => void;
   textValue: string;
   onTextChange: (text: string) => void;
 }
 
-export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextChange }: DropZoneProps) {
+export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -37,35 +37,42 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      setDroppedFile(files[0]);
-      onFileDrop(files[0]);
+      const selected = Array.from(files);
+      setDroppedFiles(selected);
+      onFilesDrop(selected);
     }
-  }, [onFileDrop]);
+  }, [onFilesDrop]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const files = e.clipboardData.files;
     if (files.length > 0) {
       e.preventDefault();
-      setDroppedFile(files[0]);
-      onFileDrop(files[0]);
+      const selected = Array.from(files);
+      setDroppedFiles(selected);
+      onFilesDrop(selected);
       return;
     }
     // Text paste handled by textarea onChange
-  }, [onFileDrop]);
+  }, [onFilesDrop]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setDroppedFile(files[0]);
-      onFileDrop(files[0]);
+      const selected = Array.from(files);
+      setDroppedFiles(selected);
+      onFilesDrop(selected);
     }
-  }, [onFileDrop]);
+  }, [onFilesDrop]);
 
-  const clearFile = () => {
-    setDroppedFile(null);
+  const clearFiles = () => {
+    setDroppedFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    onFileDrop(null);
+    if (folderInputRef.current) folderInputRef.current.value = "";
+    onFilesDrop([]);
   };
+
+  const totalBytes = droppedFiles.reduce((sum, file) => sum + file.size, 0);
+  const totalKB = (totalBytes / 1024).toFixed(1);
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-5 h-5" />;
@@ -83,7 +90,7 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
           onPaste={handlePaste}
           placeholder="Paste text, code, or anything here..."
           className="w-full h-32 bg-secondary border border-border rounded-md p-3 font-mono text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-          disabled={!!droppedFile}
+          disabled={droppedFiles.length > 0}
         />
         <span className="absolute bottom-2 right-2 text-muted-foreground text-xs font-mono">
           {textValue.length > 0 ? `${textValue.length} chars` : ""}
@@ -93,7 +100,7 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
       {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-muted-foreground text-xs font-mono uppercase tracking-widest">or drop a file</span>
+        <span className="text-muted-foreground text-xs font-mono uppercase tracking-widest">or drop files/folders</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -103,11 +110,11 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => !droppedFile && fileInputRef.current?.click()}
+        onClick={() => droppedFiles.length === 0 && fileInputRef.current?.click()}
         className={`relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all duration-200 ${
           isDragging
             ? "border-primary bg-primary/5 glow-box"
-            : droppedFile
+            : droppedFiles.length > 0
             ? "border-primary/40 bg-secondary"
             : "border-border hover:border-primary/40 bg-secondary/50 hover:bg-secondary"
         }`}
@@ -115,32 +122,50 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           className="hidden"
           onChange={handleFileSelect}
         />
+        <input
+          ref={folderInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+          onClick={(e) => e.stopPropagation()}
+          {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+        />
 
         <AnimatePresence mode="wait">
-          {droppedFile ? (
+          {droppedFiles.length > 0 ? (
             <motion.div
               key="file"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="flex items-center justify-center gap-3"
+              className="space-y-3"
             >
-              <span className="text-primary">{getFileIcon(droppedFile.type)}</span>
-              <div className="text-left">
-                <p className="text-sm font-mono text-foreground truncate max-w-[200px]">{droppedFile.name}</p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  {(droppedFile.size / 1024).toFixed(1)} KB
-                </p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-primary">{getFileIcon(droppedFiles[0].type)}</span>
+                <div className="text-left">
+                  <p className="text-sm font-mono text-foreground">
+                    {droppedFiles.length} item{droppedFiles.length > 1 ? "s" : ""} selected
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {totalKB} KB total
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); clearFiles(); }}
+                  className="ml-2 text-xs text-muted-foreground hover:text-destructive font-mono transition-colors"
+                >
+                  [remove]
+                </button>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); clearFile(); }}
-                className="ml-2 text-xs text-muted-foreground hover:text-destructive font-mono transition-colors"
-              >
-                [remove]
-              </button>
+              <p className="text-xs text-muted-foreground font-mono truncate max-w-[320px] mx-auto">
+                {droppedFiles.slice(0, 3).map((file) => file.webkitRelativePath || file.name).join(" • ")}
+                {droppedFiles.length > 3 ? " • ..." : ""}
+              </p>
             </motion.div>
           ) : (
             <motion.div
@@ -152,8 +177,30 @@ export default function DropZone({ onFileDrop, onTextPaste, textValue, onTextCha
             >
               <Upload className={`w-8 h-8 mx-auto transition-colors ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
               <p className="text-sm text-muted-foreground font-mono">
-                {isDragging ? "Drop it!" : "Drag & drop or click to browse"}
+                {isDragging ? "Drop it!" : "Drag & drop or click to browse files"}
               </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                  Choose files
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    folderInputRef.current?.click();
+                  }}
+                  className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                >
+                  Choose folder
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

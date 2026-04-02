@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
+import JSZip from "jszip";
 import DropZone from "@/components/DropZone";
 import ShareOptions from "@/components/ShareOptions";
 import ShareResult from "@/components/ShareResult";
@@ -10,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [expiry, setExpiry] = useState(10 * 60 * 1000);
   const [oneTime, setOneTime] = useState(false);
   const [password, setPassword] = useState("");
@@ -37,14 +38,14 @@ const Index = () => {
   );
 
   const clearFile = useCallback(() => {
-    setFile(null);
+    setFiles([]);
     cancelUpload(true);
   }, [cancelUpload]);
 
-  const handleFileDrop = useCallback(
-    (f: File | null) => {
-      if (f) {
-        setFile(f);
+  const handleFilesDrop = useCallback(
+    (selectedFiles: File[]) => {
+      if (selectedFiles.length > 0) {
+        setFiles(selectedFiles);
         setText("");
         return;
       }
@@ -54,17 +55,42 @@ const Index = () => {
     [clearFile, setText]
   );
 
+  const buildZipFromFiles = useCallback(async (selectedFiles: File[]) => {
+    const zip = new JSZip();
+
+    selectedFiles.forEach((sourceFile) => {
+      const fileWithPath = sourceFile as File & { webkitRelativePath?: string };
+      const path = fileWithPath.webkitRelativePath || sourceFile.name;
+      zip.file(path, sourceFile);
+    });
+
+    const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    return new File([blob], `dropsync-${timestamp}.zip`, { type: "application/zip" });
+  }, []);
+
   const handleShare = async () => {
-    if (!text && !file) return;
+    if (!text && files.length === 0) return;
 
     setIsSharing(true);
     const currentUploadId = ++uploadIdRef.current;
 
     try {
+      const hasFolderSelection = files.some((f) => {
+        const fileWithPath = f as File & { webkitRelativePath?: string };
+        return !!fileWithPath.webkitRelativePath;
+      });
+
+      const uploadFile = files.length === 0
+        ? undefined
+        : files.length === 1 && !hasFolderSelection
+          ? files[0]
+          : await buildZipFromFiles(files);
+
       const item = await createShare({
-        type: file ? "file" : "text",
-        content: file ? undefined : text,
-        file: file ?? undefined,
+        type: uploadFile ? "file" : "text",
+        content: uploadFile ? undefined : text,
+        file: uploadFile,
         password: password || undefined,
         expiresAt: Date.now() + expiry,
         oneTimeDownload: oneTime,
@@ -88,14 +114,14 @@ const Index = () => {
     uploadIdRef.current += 1;
 
     setText("");
-    setFile(null);
+    setFiles([]);
     setPassword("");
     setOneTime(false);
     setShareResult(null);
     setIsSharing(false);
   };
 
-  const canShare = text.length > 0 || file !== null;
+  const canShare = text.length > 0 || files.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col scanline">
@@ -134,8 +160,7 @@ const Index = () => {
           {!shareResult ? (
             <>
               <DropZone
-                onFileDrop={handleFileDrop}
-                onTextPaste={() => {}}
+                onFilesDrop={handleFilesDrop}
                 textValue={text}
                 onTextChange={(v) => {
                   setText(v);
