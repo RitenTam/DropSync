@@ -112,12 +112,12 @@ const Index = () => {
     }
   };
 
-  const handleFileShare = async () => {
-    await createShareLink("file");
-  };
-
-  const handleTextShare = async () => {
-    await createShareLink("text");
+  const handleShare = async () => {
+    if (canShareFiles) {
+      await createShareLink("file");
+    } else if (canShareText) {
+      await createShareLink("text");
+    }
   };
 
   const handleReset = () => {
@@ -207,19 +207,19 @@ const Index = () => {
 
                   <button
                     type="button"
-                    onClick={handleFileShare}
-                    disabled={!canShareFiles || isSharing}
+                    onClick={handleShare}
+                    disabled={(!canShareFiles && !canShareText) || isSharing}
                     className={`group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-base font-bold transition-all duration-300 ${
-                      canShareFiles
+                      (canShareFiles || canShareText)
                         ? "bg-primary text-primary-foreground glow-box-strong hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
                         : "bg-secondary text-muted-foreground cursor-not-allowed"
                     }`}
                   >
                     <span className="relative z-10 inline-flex items-center gap-2">
                       {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      {isSharing ? "Generating secure link..." : "Generate file share link"}
+                      {isSharing ? "Generating secure link..." : "Generate Share Link"}
                     </span>
-                    {canShareFiles ? (
+                    {(canShareFiles || canShareText) ? (
                       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     ) : null}
                   </button>
@@ -292,27 +292,8 @@ const Index = () => {
                     />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleTextShare}
-                    disabled={!canShareText || isSharing}
-                    className={`group relative w-full overflow-hidden rounded-2xl px-5 py-4 text-base font-bold transition-all duration-300 ${
-                      canShareText
-                        ? "bg-primary text-primary-foreground glow-box-strong hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
-                        : "bg-secondary text-muted-foreground cursor-not-allowed"
-                    }`}
-                  >
-                    <span className="relative z-10 inline-flex items-center gap-2">
-                      {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      {isSharing ? "Generating secure link..." : "Generate text share link"}
-                    </span>
-                    {canShareText ? (
-                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                    ) : null}
-                  </button>
-
                   <p className="text-xs text-muted-foreground">
-                    Text stays in this panel while you work on files in the other one.
+                    Use the Generate Share Link button in the file panel above to share your text.
                   </p>
                 </div>
               </div>
