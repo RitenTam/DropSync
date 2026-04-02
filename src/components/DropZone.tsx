@@ -32,6 +32,28 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
     });
   }, [onFilesDrop]);
 
+  const openMultiFilePicker = useCallback(async () => {
+    type PickerHandle = { getFile: () => Promise<File> };
+    type PickerWindow = Window & {
+      showOpenFilePicker?: (options?: { multiple?: boolean }) => Promise<PickerHandle[]>;
+    };
+
+    const pickerWindow = window as PickerWindow;
+
+    if (!pickerWindow.showOpenFilePicker) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const handles = await pickerWindow.showOpenFilePicker({ multiple: true });
+      const selectedFiles = await Promise.all(handles.map((handle) => handle.getFile()));
+      mergeFiles(selectedFiles);
+    } catch {
+      // User cancelled picker.
+    }
+  }, [mergeFiles]);
+
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -124,7 +146,7 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => void openMultiFilePicker()}
         className={`relative border-2 border-dashed rounded-md p-8 text-center cursor-pointer transition-all duration-200 ${
           isDragging
             ? "border-primary bg-primary/5 glow-box"
@@ -185,7 +207,7 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    fileInputRef.current?.click();
+                    void openMultiFilePicker();
                   }}
                   className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
                 >
@@ -215,12 +237,15 @@ export default function DropZone({ onFilesDrop, textValue, onTextChange }: DropZ
               <p className="text-sm text-muted-foreground font-mono">
                 {isDragging ? "Drop it!" : "Drag & drop or click to browse files"}
               </p>
+              <p className="text-xs text-muted-foreground font-mono">
+                Tip: hold Ctrl/Shift to select multiple files in the chooser.
+              </p>
               <div className="flex justify-center gap-2">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    fileInputRef.current?.click();
+                    void openMultiFilePicker();
                   }}
                   className="px-3 py-1.5 rounded-md border border-border text-xs font-mono text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
                 >
