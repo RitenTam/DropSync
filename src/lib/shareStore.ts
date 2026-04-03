@@ -23,7 +23,26 @@ function generateCode(): string {
   return code;
 }
 
-function toShareItem(row: any): ShareItem {
+async function toShareItem(row: any): Promise<ShareItem> {
+  let fileUrl: string | undefined;
+
+  if (row.file_path) {
+    // Generate a signed URL so file access does not depend on sender session/window state.
+    const expiresAtMs = new Date(row.expires_at).getTime();
+    const remainingSeconds = Math.max(1, Math.floor((expiresAtMs - Date.now()) / 1000));
+    const signedUrlTtl = Math.min(remainingSeconds, 60 * 60 * 24);
+
+    const { data } = await supabase.storage
+      .from("shares")
+      .createSignedUrl(row.file_path, signedUrlTtl);
+
+    fileUrl = data?.signedUrl;
+
+    if (!fileUrl) {
+      fileUrl = supabase.storage.from("shares").getPublicUrl(row.file_path).data.publicUrl;
+    }
+  }
+
   return {
     id: row.id,
     code: row.code,
@@ -32,9 +51,7 @@ function toShareItem(row: any): ShareItem {
     fileName: row.file_name ?? undefined,
     fileSize: row.file_size ?? undefined,
     fileType: row.file_type ?? undefined,
-    fileUrl: row.file_path
-      ? supabase.storage.from("shares").getPublicUrl(row.file_path).data.publicUrl
-      : undefined,
+    fileUrl,
     password: row.password ?? undefined,
     expiresAt: new Date(row.expires_at).getTime(),
     oneTimeDownload: row.one_time_download,
@@ -81,7 +98,7 @@ export async function createShare(data: {
     .single();
 
   if (error) throw new Error(`Failed to create share: ${error.message}`);
-  return toShareItem(row);
+  return await toShareItem(row);
 }
 
 export async function getShare(code: string): Promise<ShareItem | null> {
@@ -93,7 +110,7 @@ export async function getShare(code: string): Promise<ShareItem | null> {
     .single();
 
   if (error || !row) return null;
-  return toShareItem(row);
+  return await toShareItem(row);
 }
 
 export async function markDownloaded(code: string): Promise<void> {
