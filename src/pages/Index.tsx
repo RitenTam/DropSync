@@ -293,7 +293,7 @@ const Index = () => {
         <p className="text-xs text-muted-foreground">
           No login · No tracking · Auto-expires · E2E
         </p>
-        <p className="text-xs text-muted-foreground/80">
+        <p className="mt-1 text-xs text-muted-foreground/80">
           © {currentYear} Ritendra Tamang. All rights reserved.
         </p>
         <a
