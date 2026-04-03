@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Zap, Loader2, ShieldCheck, Clock3, EyeOff, Sparkles } from "lucide-react";
+import { Zap, Loader2, ShieldCheck, Clock3, EyeOff, Sparkles, Instagram } from "lucide-react";
 import JSZip from "jszip";
 import DropZone from "@/components/DropZone";
 import ShareOptions from "@/components/ShareOptions";
@@ -295,6 +295,15 @@ const Index = () => {
         <p className="text-xs text-muted-foreground/80">
           Developed by Ritendra Tamang
         </p>
+        <a
+          href="https://www.instagram.com/riten_07/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Contact Ritendra on Instagram"
+          className="mt-3 inline-flex items-center justify-center rounded-full border border-border/70 bg-[#0d1010] p-2 text-muted-foreground transition-colors hover:text-primary"
+        >
+          <Instagram className="h-4 w-4" />
+        </a>
       </footer>
     </div>
   );
