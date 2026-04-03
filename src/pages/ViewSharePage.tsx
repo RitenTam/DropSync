@@ -67,7 +67,12 @@ export default function ViewSharePage() {
             </span>
             <span>DropSync</span>
           </a>
-          <a href="/receive" className="transition-colors hover:text-primary">[receive]</a>
+          <a
+            href="/receive"
+            className="inline-flex items-center rounded-full border border-primary/45 bg-primary/15 px-3 py-1.5 text-xs font-semibold tracking-[0.22em] text-primary shadow-[0_0_12px_rgba(128,255,96,0.2)] transition-all hover:bg-primary/25 hover:shadow-[0_0_16px_rgba(128,255,96,0.28)]"
+          >
+            [receive]
+          </a>
         </div>
       </header>
 
