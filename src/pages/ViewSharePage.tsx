@@ -56,28 +56,33 @@ export default function ViewSharePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col scanline">
-      <header className="border-b border-border px-4 py-3">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            <span className="font-mono font-bold text-foreground tracking-tight">DropSync</span>
+    <div className="scanline-shell min-h-screen flex flex-col overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(128,255,96,0.08),transparent_28%),radial-gradient(circle_at_10%_12%,rgba(128,255,96,0.05),transparent_20%)]" />
+
+      <header className="relative z-10 px-4 py-4">
+        <div className="mx-auto flex max-w-[560px] items-center justify-between text-[11px] font-medium tracking-[0.28em] text-foreground/70">
+          <a href="/" className="inline-flex items-center gap-2 transition-colors hover:text-primary">
+            <span className="grid h-7 w-7 place-items-center rounded-full border border-primary/30 bg-primary/10 text-primary">
+              <Zap className="h-3.5 w-3.5" />
+            </span>
+            <span>DropSync</span>
           </a>
+          <a href="/receive" className="transition-colors hover:text-primary">[receive]</a>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4">
+      <main className="relative z-10 flex-1 px-4 pb-10 pt-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-lg space-y-6"
+          className="mx-auto w-full max-w-[520px] space-y-6"
         >
           {item === undefined && (
             <p className="text-center text-muted-foreground font-mono text-sm">Loading...</p>
           )}
 
           {item === null && (
-            <div className="text-center space-y-3">
+            <div className="glass-panel rounded-3xl p-6 text-center space-y-3">
               <AlertTriangle className="w-10 h-10 mx-auto text-destructive" />
               <h2 className="font-mono font-bold text-foreground">Not Found or Expired</h2>
               <p className="text-xs text-muted-foreground font-mono">
@@ -90,7 +95,7 @@ export default function ViewSharePage() {
           )}
 
           {item && !unlocked && (
-            <div className="space-y-4 text-center">
+            <div className="glass-panel rounded-3xl p-6 space-y-4 text-center">
               <Lock className="w-10 h-10 mx-auto text-primary" />
               <h2 className="font-mono font-bold text-foreground">Password Protected</h2>
               <div className="flex gap-2 max-w-xs mx-auto">
@@ -100,7 +105,7 @@ export default function ViewSharePage() {
                   onChange={(e) => setPasswordInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
                   placeholder="Enter password"
-                  className="flex-1 bg-secondary border border-border rounded-md px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="terminal-input flex-1 rounded-md px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25"
                   autoFocus
                 />
                 <button
@@ -125,7 +130,7 @@ export default function ViewSharePage() {
 
               {item.type === "text" && item.content && (
                 <div className="space-y-2">
-                  <div className="bg-secondary border border-border rounded-md p-4 max-h-64 overflow-auto">
+                  <div className="glass-panel rounded-2xl p-4 max-h-64 overflow-auto">
                     <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
                       {item.content}
                     </pre>
@@ -142,7 +147,7 @@ export default function ViewSharePage() {
 
               {item.type === "file" && (
                 <div className="space-y-3">
-                  <div className="bg-secondary border border-border rounded-md p-6 flex items-center justify-center gap-4">
+                  <div className="glass-panel rounded-2xl p-6 flex items-center justify-center gap-4">
                     <span className="text-primary">{getFileIcon(item.fileType)}</span>
                     <div>
                       <p className="font-mono text-sm text-foreground">{item.fileName}</p>
