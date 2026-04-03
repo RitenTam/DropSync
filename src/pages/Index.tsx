@@ -10,6 +10,7 @@ import { createShare, type ShareItem } from "@/lib/shareStore";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const currentYear = new Date().getFullYear();
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [expiry, setExpiry] = useState(10 * 60 * 1000);
@@ -293,7 +294,7 @@ const Index = () => {
           No login · No tracking · Auto-expires · E2E
         </p>
         <p className="text-xs text-muted-foreground/80">
-          Developed by Ritendra Tamang
+          © {currentYear} Ritendra Tamang. All rights reserved.
         </p>
         <a
           href="https://www.instagram.com/riten_07/"
