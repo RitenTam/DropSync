@@ -18,6 +18,7 @@ const Index = () => {
   const [password, setPassword] = useState("");
   const [shareResult, setShareResult] = useState<ShareItem | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState("");
 
   const uploadIdRef = useRef(0);
 
@@ -76,6 +77,7 @@ const Index = () => {
     if (shareType === "text" && !hasText) return;
     if (shareType === "file" && !hasFiles) return;
 
+    setShareError("");
     setIsSharing(true);
     const currentUploadId = ++uploadIdRef.current;
 
@@ -106,6 +108,13 @@ const Index = () => {
       setShareResult(item);
     } catch (err) {
       console.error("Share failed:", err);
+      const message = err instanceof Error ? err.message : "Share generation failed.";
+      setShareError(message);
+      toast({
+        title: "Share failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       if (currentUploadId === uploadIdRef.current) {
         setIsSharing(false);
@@ -130,6 +139,7 @@ const Index = () => {
     setPassword("");
     setOneTime(false);
     setShareResult(null);
+    setShareError("");
     setIsSharing(false);
   };
 
@@ -239,6 +249,12 @@ const Index = () => {
                     <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   ) : null}
                 </button>
+
+                {shareError ? (
+                  <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {shareError}
+                  </div>
+                ) : null}
 
                 <div className="text-center">
                   <Link to="/receive" className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-primary">
