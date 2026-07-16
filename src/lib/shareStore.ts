@@ -23,10 +23,10 @@ function generateCode(): string {
   return code;
 }
 
-async function toShareItem(row: any): Promise<ShareItem> {
+async function toShareItem(row: any, includeFileUrl = true): Promise<ShareItem> {
   let fileUrl: string | undefined;
 
-  if (row.file_path) {
+  if (includeFileUrl && row.file_path) {
     // Generate a signed URL so file access does not depend on sender session/window state.
     const expiresAtMs = new Date(row.expires_at).getTime();
     const remainingSeconds = Math.max(1, Math.floor((expiresAtMs - Date.now()) / 1000));
@@ -98,7 +98,7 @@ export async function createShare(data: {
     .single();
 
   if (error) throw new Error(`Failed to create share: ${error.message}`);
-  return await toShareItem(row);
+  return await toShareItem(row, false);
 }
 
 export async function getShare(code: string): Promise<ShareItem | null> {
